@@ -1,1 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fixlist Center</title>
+    <style>
+        body {
+            background-color: #020408;
+            color: #b9c7e2;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            height: 40px;
+        }
+
+        .nav-left, .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type="password"] {
+            background: #0b1120;
+            border: 1px solid #1e293b;
+            color: #f8fafc;
+            padding: 6px 12px;
+            border-radius: 4px;
+            outline: none;
+            font-size: 0.85rem;
+            width: 140px;
+        }
+
+        input[type="password"]:focus {
+            border-color: #2563eb;
+        }
+
+        button {
+            background: #070d19;
+            color: #2563eb;
+            border: 1px solid #1e3a8a;
+            padding: 6px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.15s ease;
+        }
+
+        button:hover {
+            background: #1e3a8a;
+            color: #fff;
+            border-color: #2563eb;
+        }
+
+        button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        textarea {
+            width: 100%;
+            height: 550px;
+            background: #010205;
+            color: #8492a6;
+            border: 1px solid #111827;
+            border-radius: 4px;
+            padding: 20px;
+            box-sizing: border-box;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.95rem;
+            resize: none;
+            outline: none;
+            line-height: 1.5;
+        }
+
+        textarea:focus {
+            border-color: #1e3a8a;
+        }
+
+        #modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(1, 2, 5, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-box {
+            background: #070d19;
+            border: 1px solid #1e3a8a;
+            border-radius: 4px;
+            padding: 30px;
+            max-width: 450px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .modal-text {
+            color: #f1f5f9;
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+
+        .modal-btn {
+            background: #1e3a8a;
+            color: #fff;
+            border: 1px solid #2563eb;
+            padding: 8px 30px;
+        }
+
+        .modal-btn:hover {
+            background: #2563eb;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-text">If this fixlist was not written for your device, DO NOT run it. Doing so can cause damage on said device</div>
+            <button class="modal-btn" onclick="dismissWarning()">OK</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="navbar">
+            <div class="nav-left" id="login-zone">
+                <input type="password" id="pass-input" placeholder="Password">
+                <button id="login-btn" onclick="checkAccess()">Login</button>
+            </div>
+            <div class="nav-left hidden" id="viewer-zone">
+                <button onclick="copyAll()">Copy All</button>
+                <button onclick="downloadFix()">Download</button>
+            </div>
+            <div class="nav-right">
+                <button id="lock-btn" onclick="handleLock()" disabled>Lock</button>
+            </div>
+        </div>
+
+        <textarea id="main-box" placeholder="Write or paste fixlist instructions here..." readonly></textarea>
+    </div>
+
+    <script>
+        const p1 = "github_pat_11BRVGUEI0oVqYpPjly3hR_";
+        const p2 = "wLSbKeknaCuigj017bIAHmskNHK2XG8IadH9bBdDD9VSSJZ4EWOvokT2civ";
+        const target = atob('U2V0RXJyb3I=');
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const currentId = urlParams.get('id');
+        
+        const mainBox = document.getElementById('main-box');
+        const lockBtn = document.getElementById('lock-btn');
+        const passInput = document.getElementById('pass-input');
+        const loginZone = document.getElementById('login-zone');
+        const viewerZone = document.getElementById('viewer-zone');
+
+        function dismissWarning() {
+            document.getElementById('modal-overlay').classList.add('hidden');
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (currentId) {
+                loginZone.classList.add('hidden');
+                lockBtn.classList.add('hidden');
+                viewerZone.classList.remove('hidden');
+                mainBox.readOnly = true;
+                loadFixlist(currentId);
+            } else {
+                if (sessionStorage.getItem('authenticated') === 'true') {
+                    enableAdminMode();
+                }
+            }
+        });
+
+        function checkAccess() {
+            if (passInput.value === target) {
+                sessionStorage.setItem('authenticated', 'true');
+                enableAdminMode();
+            } else {
+                alert('Access Denied');
+                passInput.value = '';
+            }
+        }
+
+        passInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') checkAccess();
+        });
+
+        function enableAdminMode() {
+            loginZone.innerHTML = '<span style="color:#2563eb; font-size:0.85rem; font-weight:500; text-transform:uppercase;">Admin</span>';
+            lockBtn.disabled = false;
+            mainBox.readOnly = false;
+        }
+
+        async function handleLock() {
+            const content = mainBox.value.trim();
+            if (!content) {
+                alert('Box is empty');
+                return;
+            }
+
+            mainBox.readOnly = true;
+            lockBtn.disabled = true;
+
+            const token = p1 + p2;
+
+            try {
+                const response = await fetch("https://api.github.com/gists", {
+                    method: "POST",
+                    headers: { 
+                        "Authorization": `token ${token}`,
+                        "Content-Type": "application/json" 
+                    },
+                    body: JSON.stringify({
+                        public: false,
+                        files: { "fixlist.txt": { content: content } }
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    window.location.href = window.location.origin + window.location.pathname + "?id=" + data.id;
+                } else {
+                    throw new Error();
+                }
+            } catch (err) {
+                alert('Transmission Failure.');
+                mainBox.readOnly = false;
+                lockBtn.disabled = false;
+            }
+        }
+
+        async function loadFixlist(id) {
+            try {
+                const res = await fetch(`https://api.github.com/gists/${id}`);
+                if (!res.ok) throw new Error();
+                const data = await res.json();
+                
+                const createdDate = new Date(data.created_at);
+                const expirationDate = new Date(createdDate.getTime() + (30 * 24 * 60 * 60 * 1000));
+                const currentDate = new Date();
+
+                if (currentDate > expirationDate) {
+                    mainBox.value = 'Error: This fixlist has expired (30 day execution limit reached).';
+                    viewerZone.classList.add('hidden');
+                    return;
+                }
+
+                mainBox.value = data.files["fixlist.txt"].content;
+            } catch (e) {
+                mainBox.value = 'Error: Unable to retrieve content record.';
+            }
+        }
+
+        function copyAll() {
+            mainBox.select();
+            document.execCommand('copy');
+            window.getSelection().removeAllRanges();
+            const btn = viewerZone.querySelector('button');
+            const orig = btn.innerText;
+            btn.innerText = 'Copied';
+            setTimeout(() => btn.innerText = orig, 2000);
+        }
+
+        function downloadFix() {
+            const blob = new Blob([mainBox.value], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'fixlist.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
 
