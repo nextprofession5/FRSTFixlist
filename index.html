@@ -199,7 +199,7 @@
                 mainBox.readOnly = true;
                 loadFixlist(currentId);
             } else {
-                if (sessionStorage.getItem('authenticated') === 'true') {
+                if (localStorage.getItem('authenticated') === 'true') {
                     enableAdminMode();
                 }
             }
@@ -207,7 +207,7 @@
 
         function checkAccess() {
             if (passInput.value === target) {
-                sessionStorage.setItem('authenticated', 'true');
+                localStorage.setItem('authenticated', 'true');
                 enableAdminMode();
             } else {
                 alert('Access Denied');
