@@ -94,6 +94,8 @@
             resize: none;
             outline: none;
             line-height: 1.5;
+            overflow-x: auto;
+            white-space: pre;
         }
 
         textarea:focus {
@@ -150,7 +152,7 @@
 
     <div id="modal-overlay">
         <div class="modal-box">
-            <div class="modal-text">If this fixlist was not written for your device, DO NOT run it. Doing so can cause damage on said device</div>
+            <div class="modal-text">If this fixlist was not written for your device, DO NOT run it. Doing so can cause damage on said device*</div>
             <button class="modal-btn" onclick="dismissWarning()">OK</button>
         </div>
     </div>
@@ -170,7 +172,7 @@
             </div>
         </div>
 
-        <textarea id="main-box" placeholder="Write or paste fixlist instructions here..." readonly></textarea>
+        <textarea id="main-box" placeholder="Write or paste fixlist instructions here..." readonly wrap="off"></textarea>
     </div>
 
     <script>
@@ -198,16 +200,11 @@
                 viewerZone.classList.remove('hidden');
                 mainBox.readOnly = true;
                 loadFixlist(currentId);
-            } else {
-                if (localStorage.getItem('authenticated') === 'true') {
-                    enableAdminMode();
-                }
             }
         });
 
         function checkAccess() {
             if (passInput.value === target) {
-                localStorage.setItem('authenticated', 'true');
                 enableAdminMode();
             } else {
                 alert('Access Denied');
