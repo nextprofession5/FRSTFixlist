@@ -163,6 +163,10 @@
                 <input type="password" id="pass-input" placeholder="Password">
                 <button id="login-btn" onclick="checkAccess()">Login</button>
             </div>
+            <div class="nav-left hidden" id="admin-tools">
+                <button onclick="document.getElementById('file-input').click()">Upload File</button>
+                <input type="file" id="file-input" accept=".txt" hidden onchange="handleFileUpload(this)">
+            </div>
             <div class="nav-left hidden" id="viewer-zone">
                 <button onclick="copyAll()">Copy All</button>
                 <button onclick="downloadFix()">Download</button>
@@ -172,12 +176,12 @@
             </div>
         </div>
 
-        <textarea id="main-box" placeholder="Write or paste fixlist instructions here..." readonly wrap="off"></textarea>
+        <textarea id="main-box" placeholder="Write, paste, or upload fixlist instructions here..." readonly wrap="off"></textarea>
     </div>
 
     <script>
-        const p1 = "github_pat_11BRVGUEI0oVqYpPjly3hR_";
-        const p2 = "wLSbKeknaCuigj017bIAHmskNHK2XG8IadH9bBdDD9VSSJZ4EWOvokT2civ";
+        const p1 = "";
+        const p2 = "";
         const target = atob('U2V0RXJyb3I=');
         
         const urlParams = new URLSearchParams(window.location.search);
@@ -187,6 +191,7 @@
         const lockBtn = document.getElementById('lock-btn');
         const passInput = document.getElementById('pass-input');
         const loginZone = document.getElementById('login-zone');
+        const adminTools = document.getElementById('admin-tools');
         const viewerZone = document.getElementById('viewer-zone');
 
         function dismissWarning() {
@@ -217,9 +222,22 @@
         });
 
         function enableAdminMode() {
-            loginZone.innerHTML = '<span style="color:#2563eb; font-size:0.85rem; font-weight:500; text-transform:uppercase;">Admin</span>';
+            loginZone.innerHTML = '<span style="color:#2563eb; font-size:0.85rem; font-weight:500; text-transform:uppercase; margin-right:10px;">Admin</span>';
+            adminTools.classList.remove('hidden');
             lockBtn.disabled = false;
             mainBox.readOnly = false;
+        }
+
+        function handleFileUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                mainBox.value = e.target.result;
+                input.value = ''; 
+            };
+            reader.readAsText(file);
         }
 
         async function handleLock() {
